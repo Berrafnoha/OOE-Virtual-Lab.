@@ -1,0 +1,26 @@
+# 📐 MATHEMATICAL MODELS FOR OOE SIMULATIONS
+**Module:** Physics / Computer Vision  
+**Supervisor:** Dr. CHEGGOU Rabéa  
+
+Use these LaTeX formulas in your `README.md` to justify your simulation results.
+
+---
+
+### 1. Refraction & Fiber Optics (Theme 1)
+To calculate the refraction angle or the critical angle for total internal reflection:
+- **Snell-Descartes Law:** $$n_1 \sin(\theta_1) = n_2 \sin(\theta_2)$$
+- **Critical Angle ($\theta_c$):** $$\theta_c = \arcsin\left(\frac{n_2}{n_1}\right) \quad \text{for } n_1 > n_2$$
+
+### 2. Biophysics of the Eye (Theme 2)
+To model the power of the crystalline lens and the correction of Myopia:
+- **Lens Power (Diopters):** $$V = \frac{1}{f'} = \frac{1}{\overline{OA'}} - \frac{1}{\overline{OA}}$$
+- **Thin Lens Approximation:** $$\frac{1}{f'} = (n - 1) \left( \frac{1}{R_1} - \frac{1}{R_2} \right)$$
+
+### 3. EM Waves: Interference & Diffraction (Theme 4)
+To simulate wave patterns on the screen:
+- **Young's Double-Slit (Interfrange $i$):** $$i = \frac{\lambda \cdot D}{a}$$
+- **Diffraction through a Slit (Width $b$):** $$\sin(\theta) \approx \theta = \frac{\lambda}{b}$$
+- **Intensity Pattern ($I$):** $$I(\theta) = I_0 \left[ \frac{\sin(\beta)}{\beta} \right]^2 \cos^2(\alpha)$$
+
+---
+> **Note to Students:** Ensure your simulation code uses these exact constants for consistent results.
