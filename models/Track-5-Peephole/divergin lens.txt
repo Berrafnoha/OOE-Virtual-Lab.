@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diverging Lens Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060d18;
+  --surface: #0c1829;
+  --border: #1a3050;
+  --teal: #00d4e8;
+  --teal2: #00a8bc;
+  --amber: #f5a623;
+  --green: #00e676;
+  --purple: #c77dff;
+  --red: #ff6b6b;
+  --text: #dce8f0;
+  --muted: #5a7a90;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* grid bg */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:
+    linear-gradient(rgba(0,212,232,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,232,0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events:none;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 28px 40px 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+.header-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  line-height: 1.1;
+  color: #fff;
+}
+.header-title span { color: var(--teal); }
+.header-sub {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* ── APP TABS ── */
+.app-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 5px;
+  margin: 24px 40px 0;
+  position: relative;
+  z-index: 2;
+  overflow-x: auto;
+}
+.app-tab {
+  flex: 1;
+  min-width: 120px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  transition: all 0.25s;
+  text-align: center;
+  white-space: nowrap;
+  border: none;
+  background: transparent;
+  font-family: 'DM Sans', sans-serif;
+}
+.app-tab:hover { color: var(--text); }
+.app-tab.active {
+  color: var(--bg);
+  font-weight: 700;
+}
+.app-tab[data-app="peephole"].active  { background: var(--teal); }
+.app-tab[data-app="myopia"].active    { background: var(--amber); }
+.app-tab[data-app="telescope"].active { background: var(--purple); }
+.app-tab[data-app="laser"].active     { background: var(--green); color: #060d18; }
+
+/* ── MAIN LAYOUT ── */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  padding: 20px 40px 40px;
+  position: relative;
+  z-index: 2;
+}
+
+/* ── CANVAS PANEL ── */
+.canvas-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.canvas-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.canvas-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.25rem;
+  color: #fff;
+}
+.step-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+.diagram-area {
+  flex: 1;
+  position: relative;
+  min-height: 280px;
+}
+.diagram-area canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Step controls */
+.step-controls {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.step-dots {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+.step-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.step-dot.done { background: var(--teal2); }
+.step-dot.active { background: var(--teal); transform: scale(1.4); }
+
+.ctrl-btn {
+  padding: 9px 22px;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+.ctrl-btn.prev {
+  background: transparent;
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+}
+.ctrl-btn.prev:hover { color: var(--text); border-color: var(--muted); }
+.ctrl-btn.next {
+  background: var(--teal);
+  color: var(--bg);
+}
+.ctrl-btn.next:hover { background: #00eeff; }
+.ctrl-btn:disabled { opacity: 0.3; cursor: default; transform: none !important; }
+
+/* ── SIDE PANEL ── */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  animation: slideIn 0.35s ease;
+}
+@keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+.info-step-num {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+.info-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+.info-body {
+  font-size: 0.86rem;
+  color: rgba(220,232,240,0.75);
+  line-height: 1.75;
+}
+.info-body strong { color: #fff; font-weight: 600; }
+
+.key-fact {
+  background: rgba(0,212,232,0.06);
+  border-left: 3px solid var(--teal);
+  border-radius: 0 10px 10px 0;
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  color: var(--text);
+  line-height: 1.6;
+  margin-top: 12px;
+}
+.key-fact.amber { background: rgba(245,166,35,0.06); border-color: var(--amber); }
+.key-fact.purple { background: rgba(199,125,255,0.06); border-color: var(--purple); }
+.key-fact.green  { background: rgba(0,230,118,0.06); border-color: var(--green); }
+
+.slider-wrap {
+  margin-top: 14px;
+}
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.slider-label span { color: var(--teal); font-weight: 700; }
+input[type=range] {
+  width: 100%;
+  accent-color: var(--teal);
+  cursor: pointer;
+}
+
+/* nav pills at bottom of side */
+.app-overview {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+}
+.overview-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.overview-items { display: flex; flex-direction: column; gap: 8px; }
+.overview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.84rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+.overview-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+.overview-item.active { background: rgba(0,212,232,0.08); color: var(--text); }
+.overview-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media(max-width: 860px) {
+  .main { grid-template-columns: 1fr; padding: 16px 20px 30px; }
+  header, .app-tabs { padding-left: 20px; padding-right: 20px; }
+  .side-panel { order: -1; }
+}
+@media(max-width: 480px) {
+  .app-tab { min-width: 80px; padding: 10px 10px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="header-title">Diverging Lens<br><span>Ray Diagram Explorer</span></div>
+    <div class="header-sub">Click through each step to build the ray diagram</div>
+  </div>
+</header>
+
+<div class="app-tabs" id="tabs">
+  <button class="app-tab active" data-app="peephole"  onclick="switchApp('peephole')">🚪 Peephole</button>
+  <button class="app-tab"        data-app="myopia"    onclick="switchApp('myopia')">👓 Myopia</button>
+  <button class="app-tab"        data-app="telescope" onclick="switchApp('telescope')">🔭 Telescope</button>
+  <button class="app-tab"        data-app="laser"     onclick="switchApp('laser')">🔬 Laser Beam</button>
+</div>
+
+<div class="main">
+  <div class="canvas-panel">
+    <div class="canvas-header">
+      <div class="canvas-title" id="canvas-title">Door Peephole</div>
+      <div class="step-badge" id="step-badge" style="background:rgba(0,212,232,0.15);color:var(--teal)">STEP 1 / 4</div>
+    </div>
+    <div class="diagram-area">
+      <canvas id="diagram-canvas"></canvas>
+    </div>
+    <div class="step-controls">
+      <div class="step-dots" id="step-dots"></div>
+      <button class="ctrl-btn prev" id="prev-btn" onclick="prevStep()" disabled>← Back</button>
+      <button class="ctrl-btn next" id="next-btn" onclick="nextStep()">Next →</button>
+    </div>
+  </div>
+
+  <div class="side-panel">
+    <div class="info-card" id="info-card">
+      <!-- filled by JS -->
+    </div>
+    <div class="app-overview">
+      <div class="overview-title">Applications</div>
+      <div class="overview-items">
+        <div class="overview-item active" data-app="peephole" onclick="switchApp('peephole')"><div class="overview-dot" style="background:var(--teal)"></div>🚪 Door Peephole</div>
+        <div class="overview-item" data-app="myopia" onclick="switchApp('myopia')"><div class="overview-dot" style="background:var(--amber)"></div>👓 Myopia Correction</div>
+        <div class="overview-item" data-app="telescope" onclick="switchApp('telescope')"><div class="overview-dot" style="background:var(--purple)"></div>🔭 Galilean Telescope</div>
+        <div class="overview-item" data-app="laser" onclick="switchApp('laser')"><div class="overview-dot" style="background:var(--green)"></div>🔬 Laser Beam Expander</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('diagram-canvas');
+const ctx = canvas.getContext('2d');
+
+// ─── COLORS ───
+const C = {
+  bg: '#0c1829',
+  axis: 'rgba(255,255,255,0.12)',
+  lens: '#00d4e8',
+  lensFill: 'rgba(0,212,232,0.08)',
+  ray: '#f5a623',
+  ray2: '#00d4e8',
+  virtual: 'rgba(0,212,232,0.45)',
+  focal: '#f5a623',
+  green: '#00e676',
+  red: '#ff6b6b',
+  purple: '#c77dff',
+  white: 'rgba(255,255,255,0.85)',
+  dim: 'rgba(255,255,255,0.35)',
+  label: 'rgba(220,232,240,0.8)',
+};
+
+let currentApp = 'peephole';
+let currentStep = 0;
+let animFrame = null;
+let animProgress = 0;
+let lensX = 0.5; // for interactive slider, 0-1
+
+// ─── APP DATA ───
+const APPS = {
+  peephole: {
+    title: 'Door Peephole',
+    color: 'var(--teal)',
+    badge: { bg: 'rgba(0,212,232,0.15)', color: 'var(--teal)' },
+    steps: [
+      {
+        title: 'The Scene: Wide Angle View',
+        body: 'Outside your door, light arrives from a <strong>very wide angle</strong> — up to 180°. A tiny hole alone could only show you a narrow slice directly ahead.',
+        fact: '💡 The diverging lens lets a small hole "see" a huge scene — that\'s the magic.',
+        factType: '',
+        draw: drawPeephole0
+      },
+      {
+        title: 'Rays Enter the Lens',
+        body: 'Wide rays from the outside hit the <strong>diverging lens</strong> inside the tube. The lens is thinner at the center — so it bends rays <strong>outward</strong> on both sides.',
+        fact: '📐 The lens bends extreme-angle rays much more than central ones — that\'s what causes the fish-eye distortion at the edges.',
+        factType: '',
+        draw: drawPeephole1
+      },
+      {
+        title: 'A Virtual Image Forms',
+        body: 'After passing through, the diverging rays appear to come from a <strong>virtual focal point F</strong> on the same side as the object. This creates a <strong>virtual, upright, smaller image</strong> of the entire outside scene.',
+        fact: '👁 The image is virtual — it can\'t be projected on a screen. Only your eye can see it by looking through the hole.',
+        factType: '',
+        draw: drawPeephole2
+      },
+      {
+        title: 'Your Eye Sees the Wide Scene',
+        body: 'Your eye at the end of the tube receives the compressed rays and <strong>reconstructs the full wide-angle scene</strong>. The diverging lens turned an impossible 180° view into something a tiny hole can deliver.',
+        fact: '🐟 The fish-eye warping you see? That\'s because rays from extreme angles bend more than central rays — the distortion is physics, not a flaw.',
+        factType: '',
+        draw: drawPeephole3
+      },
+    ]
+  },
+
+  myopia: {
+    title: 'Myopia (Nearsightedness) Correction',
+    color: 'var(--amber)',
+    badge: { bg: 'rgba(245,166,35,0.15)', color: 'var(--amber)' },
+    steps: [
+      {
+        title: 'The Problem: Eye Too Long',
+        body: 'In a myopic eye, the eyeball is <strong>slightly too long</strong> (or the cornea too curved). Light from a distant object is focused <strong>in front of the retina</strong> — not on it.',
+        fact: '⚠ By the time the rays reach the retina, they\'ve already passed their focal point and started spreading again — creating a blurry circle.',
+        factType: 'amber',
+        draw: drawMyopia0
+      },
+      {
+        title: 'Adding a Diverging Lens',
+        body: 'A <strong>diverging lens</strong> is placed in front of the eye. Before the rays even enter the eye, the lens <strong>pre-spreads them</strong> — pushing the effective focal point further back.',
+        fact: '📏 The stronger the myopia, the higher the negative diopter value needed. P = 1/f, and f is negative for diverging lenses.',
+        factType: 'amber',
+        draw: drawMyopia1
+      },
+      {
+        title: 'Rays Now Focus on the Retina',
+        body: 'With the diverging lens in place, rays converge <strong>exactly on the retina</strong>. The brain receives a sharp, focused image. Vision restored.',
+        fact: '✅ The lens doesn\'t change the object — it changes where the focal point lands inside the eye. That\'s all it takes.',
+        factType: 'amber',
+        draw: drawMyopia2
+      },
+      {
+        title: 'The Complete Ray Diagram',
+        body: 'The full diagram shows: diverging lens pre-spreads rays → eye\'s own lens converges them → focal point lands <strong>precisely on retina</strong>. The virtual image appears closer — within the eye\'s comfortable focus range.',
+        fact: '👓 A prescription of −3D means f = −0.33m. The lens creates a virtual image of a distant object at about 33cm away — where the myopic eye CAN focus.',
+        factType: 'amber',
+        draw: drawMyopia3
+      },
+    ]
+  },
+
+  telescope: {
+    title: 'Galilean Telescope',
+    color: 'var(--purple)',
+    badge: { bg: 'rgba(199,125,255,0.15)', color: 'var(--purple)' },
+    steps: [
+      {
+        title: 'Step 1: Parallel Rays From a Star',
+        body: 'Light from a distant star arrives as <strong>perfectly parallel rays</strong> — because the star is so far away, all rays travel in the same direction.',
+        fact: '⭐ Parallel rays mean the object is at "infinity". This is always true for stars, planets, and distant objects.',
+        factType: 'purple',
+        draw: drawTelescope0
+      },
+      {
+        title: 'Step 2: Converging Objective Lens',
+        body: 'The large <strong>converging objective lens</strong> bends the parallel rays toward a focal point. The rays are now converging — heading toward a meeting point inside the telescope tube.',
+        fact: '🔎 This lens gathers light. The wider it is, the more light it collects — that\'s why large telescopes have huge objective lenses.',
+        factType: 'purple',
+        draw: drawTelescope1
+      },
+      {
+        title: 'Step 3: Diverging Eyepiece Intercepts',
+        body: 'Before the rays reach the focal point, the <strong>diverging eyepiece</strong> intercepts them. Because the rays were already converging, the diverging lens turns them back into <strong>parallel rays</strong>.',
+        fact: '🔑 This is the key trick: diverging a converging beam = parallel output. No real image ever forms. That\'s why the image stays upright.',
+        factType: 'purple',
+        draw: drawTelescope2
+      },
+      {
+        title: 'Step 4: Upright Magnified Image',
+        body: 'The parallel rays exit the eyepiece at a <strong>wider angle</strong> than they entered the objective. Your relaxed eye focuses these parallel rays — seeing a <strong>magnified, upright image</strong>.',
+        fact: '⬆ Kepler\'s telescope uses two converging lenses and produces an inverted image. Galileo\'s diverging eyepiece keeps it upright — perfect for observing ships and landscapes.',
+        factType: 'purple',
+        draw: drawTelescope3
+      },
+    ]
+  },
+
+  laser: {
+    title: 'Laser Beam Expander',
+    color: 'var(--green)',
+    badge: { bg: 'rgba(0,230,118,0.15)', color: 'var(--green)' },
+    steps: [
+      {
+        title: 'The Problem: Beam Too Narrow',
+        body: 'A laser produces an extremely <strong>narrow, concentrated beam</strong>. This means very high energy density — dangerous, hard to control, and any tiny lens imperfection causes big errors.',
+        fact: '⚡ Energy density = Power ÷ Area. A narrow beam has tiny area, so dangerously high energy density at any point it touches.',
+        factType: 'green',
+        draw: drawLaser0
+      },
+      {
+        title: 'Diverging Lens Spreads the Beam',
+        body: 'The <strong>diverging lens</strong> spreads the narrow beam outward. The rays are no longer parallel — they diverge. The beam widens rapidly after passing through.',
+        fact: '📐 The beam doesn\'t lose energy — it spreads it over a larger area. Same total power, much lower intensity per cm².',
+        factType: 'green',
+        draw: drawLaser1
+      },
+      {
+        title: 'Converging Lens Re-collimates',
+        body: 'A larger <strong>converging lens</strong> catches the diverging rays and bends them back into <strong>perfectly parallel</strong> — but now the parallel beam is much wider than before.',
+        fact: '📏 Expansion ratio = f_converging ÷ |f_diverging|. Example: f=100mm ÷ f=20mm = 5× wider beam.',
+        factType: 'green',
+        draw: drawLaser2
+      },
+      {
+        title: 'Wide Parallel Beam — Mission Complete',
+        body: 'The output: <strong>same laser, 5× wider</strong>. Lower intensity, more uniform energy distribution. Used in LASIK eye surgery, LiDAR, interferometers — anywhere precision and safety matter.',
+        fact: '🏥 In LASIK surgery, the expanded beam reshapes the cornea evenly across a wide area — no hot spots, no burns. The diverging lens makes precision surgery possible.',
+        factType: 'green',
+        draw: drawLaser3
+      },
+    ]
+  }
+};
+
+// ─── DRAW HELPERS ───
+function resize() {
+  const area = canvas.parentElement;
+  canvas.width = area.clientWidth;
+  canvas.height = area.clientHeight || 300;
+}
+
+function drawLabel(x, y, text, color, align='center', size=11) {
+  ctx.save();
+  ctx.font = `500 ${size}px 'DM Sans', sans-serif`;
+  ctx.fillStyle = color;
+  ctx.textAlign = align;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+function drawArrow(x1, y1, x2, y2, color, width=2, dashed=false) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = 'round';
+  if (dashed) ctx.setLineDash([6, 4]);
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  // arrowhead
+  if (!dashed) {
+    const angle = Math.atan2(y2-y1, x2-x1);
+    ctx.setLineDash([]);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x2, y2);
+    ctx.lineTo(x2 - 10*Math.cos(angle-0.4), y2 - 10*Math.sin(angle-0.4));
+    ctx.lineTo(x2 - 10*Math.cos(angle+0.4), y2 - 10*Math.sin(angle+0.4));
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawLens(cx, top, bottom, color) {
+  const W = canvas.width, H = canvas.height;
+  // draw diverging lens shape (two arcs curving inward)
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.5;
+  ctx.fillStyle = 'rgba(0,212,232,0.06)';
+
+  const h = bottom - top;
+  const bulge = Math.min(18, h * 0.18);
+
+  ctx.beginPath();
+  ctx.moveTo(cx, top);
+  ctx.quadraticCurveTo(cx + bulge, top + h/2, cx, bottom);
+  ctx.quadraticCurveTo(cx - bulge, top + h/2, cx, top);
+  ctx.fill();
+  ctx.stroke();
+
+  // arrows top/bottom
+  ctx.fillStyle = color;
+  // top arrow
+  ctx.beginPath(); ctx.moveTo(cx, top-2); ctx.lineTo(cx-5, top+10); ctx.lineTo(cx+5, top+10); ctx.closePath(); ctx.fill();
+  // bottom arrow
+  ctx.beginPath(); ctx.moveTo(cx, bottom+2); ctx.lineTo(cx-5, bottom-10); ctx.lineTo(cx+5, bottom-10); ctx.closePath(); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawAxis(y, x1, x2) {
+  ctx.save();
+  ctx.strokeStyle = C.axis;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+  ctx.restore();
+}
+
+function drawFocalPoint(x, y, label, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2); ctx.fill();
+  drawLabel(x, y+18, label, color, 'center', 11);
+  ctx.restore();
+}
+
+// ─── PEEPHOLE DRAWINGS ───
+function drawPeephole0() {
+  const W = canvas.width, H = canvas.height;
+  const mid = H/2, lx = W*0.45;
+
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 20, W-20);
+
+  // door
+  ctx.save();
+  ctx.fillStyle = 'rgba(100,120,140,0.12)';
+  ctx.strokeStyle = 'rgba(100,120,140,0.3)';
+  ctx.lineWidth = 2;
+  ctx.fillRect(lx - 35, 20, 70, H-40);
+  ctx.strokeRect(lx - 35, 20, 70, H-40);
+  ctx.restore();
+  drawLabel(lx, 16, 'DOOR', C.dim, 'center', 10);
+
+  // wide rays coming in (no lens yet)
+  const rays = [
+    { y1: H*0.1, angle: 35 },
+    { y1: H*0.3, angle: 15 },
+    { y1: mid,   angle: 0  },
+    { y1: H*0.7, angle: -15},
+    { y1: H*0.9, angle: -35},
+  ];
+  rays.forEach(r => {
+    const x1 = 20;
+    const x2 = lx - 35;
+    const y2 = r.y1 + (x2-x1)*Math.tan(r.angle*Math.PI/180);
+    ctx.save();
+    ctx.strokeStyle = C.ray;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x1, r.y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.restore();
+  });
+  drawLabel(40, H*0.08, 'Wide-angle', C.amber, 'left', 11);
+  drawLabel(40, H*0.18, 'incoming rays', C.amber, 'left', 11);
+
+  // question mark where lens would be
+  drawLabel(lx, mid+4, '?', C.teal, 'center', 32);
+  drawLabel(lx, mid+36, 'Lens goes here', C.teal, 'center', 10);
+
+  // eye on right (can't see wide view)
+  drawEye(W-30, mid);
+  ctx.save();
+  ctx.strokeStyle = C.red;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(W-50, mid-15); ctx.lineTo(W-10, mid+15); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W-10, mid-15); ctx.lineTo(W-50, mid+15); ctx.stroke();
+  ctx.restore();
+  drawLabel(W-30, mid+28, 'Can\'t see!', C.red, 'center', 10);
+}
+
+function drawPeephole1() {
+  const W = canvas.width, H = canvas.height;
+  const mid = H/2, lx = W*0.45;
+
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 20, W-20);
+
+  // door
+  ctx.save();
+  ctx.fillStyle = 'rgba(100,120,140,0.12)';
+  ctx.strokeStyle = 'rgba(100,120,140,0.3)';
+  ctx.lineWidth = 2;
+  ctx.fillRect(lx-35, 20, 70, H-40);
+  ctx.strokeRect(lx-35, 20, 70, H-40);
+  ctx.restore();
+
+  // draw lens
+  drawLens(lx, mid-70, mid+70, C.lens);
+  drawLabel(lx, mid+88, 'Diverging lens', C.lens, 'center', 10);
+
+  // wide incoming rays
+  const inRays = [
+    { y1: H*0.12, angle: 32 },
+    { y1: H*0.3,  angle: 14 },
+    { y1: mid,    angle: 0  },
+    { y1: H*0.7,  angle: -14},
+    { y1: H*0.88, angle: -32},
+  ];
+  inRays.forEach(r => {
+    const x2 = lx;
+    const x1 = 20;
+    const y2 = r.y1 + (x2-x1)*Math.tan(r.angle*Math.PI/180);
+    ctx.save();
+    ctx.strokeStyle = C.ray;
+    ctx.lineWidth = 1.8;
+    ctx.lineCap='round';
+    ctx.globalAlpha=0.85;
+    ctx.beginPath(); ctx.moveTo(x1, r.y1); ctx.lineTo(x2, y2); ctx.stroke();
+    ctx.restore();
+  });
+
+  // diverging after lens
+  const outRays = [
+    { y1: mid-20, dy: -4 },
+    { y1: mid-8,  dy: -1.5 },
+    { y1: mid,    dy: 0  },
+    { y1: mid+8,  dy: 1.5 },
+    { y1: mid+20, dy: 4  },
+  ];
+  outRays.forEach(r => {
+    ctx.save();
+    ctx.strokeStyle = C.ray;
+    ctx.lineWidth = 1.8;
+    ctx.lineCap='round';
+    ctx.globalAlpha=0.55;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath();
+    ctx.moveTo(lx, r.y1);
+    ctx.lineTo(lx+W*0.45, r.y1 + r.dy*40);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  drawLabel(20, H*0.08, 'Wide incoming', C.amber, 'left', 10);
+  drawLabel(W*0.7, H*0.08, 'Rays diverge', C.amber, 'left', 10);
+  drawLabel(W*0.7, H*0.18, 'after lens', C.amber, 'left', 10);
+}
+
+function drawPeephole2() {
+  const W = canvas.width, H = canvas.height;
+  const mid = H/2, lx = W*0.45;
+  const fx = lx - W*0.15;
+
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 20, W-20);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(100,120,140,0.12)';
+  ctx.strokeStyle = 'rgba(100,120,140,0.3)';
+  ctx.lineWidth = 2;
+  ctx.fillRect(lx-35, 20, 70, H-40);
+  ctx.strokeRect(lx-35, 20, 70, H-40);
+  ctx.restore();
+
+  drawLens(lx, mid-70, mid+70, C.lens);
+
+  // virtual focal point
+  drawFocalPoint(fx, mid, 'F (virtual)', C.focal);
+
+  // virtual dashed lines back to F
+  const outPairs = [
+    { hitY: mid-18, outDy: -5 },
+    { hitY: mid,    outDy: 0  },
+    { hitY: mid+18, outDy: 5  },
+  ];
+  outPairs.forEach(r => {
+    // real ray out (right)
+    drawArrow(lx, r.hitY, W-60, r.hitY + r.outDy*3, C.ray, 2);
+    // virtual back-trace (dashed to F)
+    ctx.save();
+    ctx.strokeStyle = C.virtual;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5,4]);
+    ctx.beginPath();
+    ctx.moveTo(lx, r.hitY);
+    ctx.lineTo(fx, mid);
+    ctx.stroke();
+    ctx.restore();
+    // incoming
+    ctx.save();
+    ctx.strokeStyle = C.ray;
+    ctx.lineWidth = 1.8;
+    ctx.globalAlpha=0.5;
+    ctx.beginPath();
+    ctx.moveTo(20, r.hitY + r.outDy*(-15));
+    ctx.lineTo(lx, r.hitY);
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // virtual image object (small upright arrow)
+  ctx.save();
+  ctx.strokeStyle = C.virtual;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(fx-W*0.08, mid); ctx.lineTo(fx-W*0.08, mid-28); ctx.stroke();
+  ctx.fillStyle = C.virtual;
+  ctx.beginPath(); ctx.moveTo(fx-W*0.08-5, mid-22); ctx.lineTo(fx-W*0.08, mid-34); ctx.lineTo(fx-W*0.08+5, mid-22); ctx.fill();
+  ctx.restore();
+  drawLabel(fx-W*0.08, mid+16, 'Virtual', C.teal, 'center', 10);
+  drawLabel(fx-W*0.08, mid+27, 'image', C.teal, 'center', 10);
+
+  drawLabel(lx, mid+88, 'Diverging lens', C.lens, 'center', 10);
+  drawLabel(W-40, mid+22, 'Eye', C.white, 'right', 10);
+  drawEye(W-30, mid);
+}
+
+function drawPeephole3() {
+  const W = canvas.width, H = canvas.height;
+  const mid = H/2, lx = W*0.45;
+
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 20, W-20);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(100,120,140,0.12)';
+  ctx.strokeStyle = 'rgba(100,120,140,0.3)';
+  ctx.lineWidth = 2;
+  ctx.fillRect(lx-35, 20, 70, H-40);
+  ctx.strokeRect(lx-35, 20, 70, H-40);
+  ctx.restore();
+
+  drawLens(lx, mid-70, mid+70, C.lens);
+
+  // full diagram — wide in, narrow out, eye
+  const fullRays = [
+    { iy: H*0.15, ia: 28, oy: mid-16, ody:-2},
+    { iy: H*0.32, ia: 12, oy: mid-6,  ody:-0.8},
+    { iy: mid,    ia: 0,  oy: mid,    ody: 0},
+    { iy: H*0.68, ia:-12, oy: mid+6,  ody: 0.8},
+    { iy: H*0.85, ia:-28, oy: mid+16, ody: 2},
+  ];
+  fullRays.forEach(r => {
+    // incoming
+    const x2 = lx;
+    const x1 = 20;
+    const ey = r.iy + (x2-x1)*Math.tan(r.ia*Math.PI/180);
+    ctx.save();
+    ctx.strokeStyle = C.ray;
+    ctx.lineWidth=1.8; ctx.lineCap='round'; ctx.globalAlpha=0.7;
+    ctx.beginPath(); ctx.moveTo(x1, r.iy); ctx.lineTo(x2, ey); ctx.stroke();
+    ctx.restore();
+    // outgoing — compressed
+    drawArrow(lx, r.oy, W-55, r.oy+r.ody*10, C.ray, 1.8);
+  });
+
+  drawEye(W-28, mid);
+  drawLabel(W-28, mid+26, 'Wide scene!', C.green, 'center', 10);
+
+  // checkmark
+  ctx.save();
+  ctx.strokeStyle = C.green; ctx.lineWidth = 3; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(W-50, mid-12); ctx.lineTo(W-38, mid); ctx.lineTo(W-20, mid-20); ctx.stroke();
+  ctx.restore();
+
+  drawLabel(lx, mid+88, 'Diverging lens', C.lens, 'center', 10);
+  drawLabel(40, H*0.08, 'Wide-angle', C.amber, 'left', 10);
+  drawLabel(40, H*0.18, 'scene outside', C.amber, 'left', 10);
+}
+
+// ─── MYOPIA DRAWINGS ───
+function drawMyopia0() {
+  const W = canvas.width, H = canvas.height;
+  const mid = H/2;
+  const eyeRx = W*0.62, eyeRy = H*0.38;
+  const retX = W*0.78;
+
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 10, W-10);
+
+  // eye ellipse
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(retX - eyeRx*0.5, mid, eyeRx*0.5, eyeRy*0.5, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.restore();
+
+  // retina
+  const rx = retX - eyeRx*0.5 + eyeRx*0.5;
+  ctx.save();
+  ctx.strokeStyle = C.red;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(retX, mid-eyeRy*0.4); ctx.lineTo(retX, mid+eyeRy*0.4); ctx.stroke();
+  ctx.restore();
+  drawLabel(retX+8, mid, 'Retina', C.red, 'left', 11);
+
+  // focus point BEFORE retina
+  const fpX = W*0.62;
+  drawFocalPoint(fpX, mid, '', C.red);
+
+  // rays converging too early
+  drawArrow(30, H*0.18, fpX, mid, C.ray, 2);
+  drawArrow(30, H*0.82, fpX, mid, C.ray, 2);
+
+  // spreading after focal point (dashed)
+  ctx.save(); ctx.strokeStyle=C.red; ctx.lineWidth=1.5; ctx.setLineDash([5,4]); ctx.globalAlpha=0.6;
+  ctx.beginPath(); ctx.moveTo(fpX, mid); ctx.lineTo(retX, mid-16); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(fpX, mid); ctx.lineTo(retX, mid+16); ctx.stroke();
+  ctx.restore();
+
+  drawLabel(fpX, mid-18, 'Focus here ✗', C.red, 'center', 11);
+  drawLabel(fpX+2, mid+32, '(too early!)', C.red, 'center', 10);
+  drawLabel(30, H*0.14, 'Distant', C.label, 'left', 10);
+  drawLabel(30, H*0.24, 'object', C.label, 'left', 10);
+}
+
+function drawMyopia1() {
+  const W = canvas.width, H = canvas.height;
+  const mid = H/2;
+  const lx = W*0.28;
+  const retX = W*0.82;
+
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 10, W-10);
+
+  drawLens(lx, mid-62, mid+62, C.lens);
+  drawLabel(lx, mid+78, 'Diverging lens', C.lens, 'center', 10);
+
+  // eye
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(W*0.66, mid, W*0.18, H*0.36, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = C.red; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(retX, mid-H*0.2); ctx.lineTo(retX, mid+H*0.2); ctx.stroke();
+  ctx.restore();
+  drawLabel(retX+8, mid, 'Retina', C.red, 'left', 11);
+
+  // incoming parallel
+  ctx.save(); ctx.strokeStyle=C.ray; ctx.lineWidth=1.8; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(10, mid-22); ctx.lineTo(lx, mid-22); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(10, mid+22); ctx.lineTo(lx, mid+22); ctx.stroke();
+  ctx.restore();
+
+  // diverged by lens
+  ctx.save(); ctx.strokeStyle=C.ray; ctx.lineWidth=1.8; ctx.lineCap='round'; ctx.globalAlpha=0.75;
+  ctx.beginPath(); ctx.moveTo(lx, mid-22); ctx.lineTo(W*0.55, mid-35); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(lx, mid+22); ctx.lineTo(W*0.55, mid+35); ctx.stroke();
+  ctx.restore();
+
+  drawLabel(lx-40, mid-30, 'Pre-spread', C.teal, 'center', 10);
+  drawLabel(lx-40, mid-19, 'by lens', C.teal, 'center', 10);
+
+  drawLabel(10, mid-30, 'Parallel rays', C.label, 'left', 10);
+  drawLabel(10, mid-19, 'from far away', C.label, 'left', 10);
+}
+
+function drawMyopia2() {
+  const W = canvas.width, H = canvas.height;
+  const mid = H/2;
+  const lx = W*0.28;
+  const retX = W*0.82;
+
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 10, W-10);
+
+  drawLens(lx, mid-62, mid+62, C.lens);
+
+  // eye
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.ellipse(W*0.66, mid, W*0.18, H*0.36, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.restore();
+
+  // retina GREEN
+  ctx.save(); ctx.strokeStyle=C.green; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(retX, mid-H*0.2); ctx.lineTo(retX, mid+H*0.2); ctx.stroke();
+  ctx.restore();
+  drawLabel(retX+8, mid, 'Retina ✓', C.green, 'left', 11);
+
+  drawFocalPoint(retX, mid, '', C.green);
+
+  // full ray path
+  drawArrow(10, mid-22, lx, mid-22, C.ray, 2);
+  drawArrow(10, mid+22, lx, mid+22, C.ray, 2);
+  drawArrow(lx, mid-22, retX, mid, C.ray, 2);
+  drawArrow(lx, mid+22, retX, mid, C.ray, 2);
+
+  drawLabel(retX, mid-26, 'Focus ON retina!', C.green, 'right', 11);
+  drawLabel(lx, mid+78, 'Diverging lens', C.lens, 'center', 10);
+}
+
+function drawMyopia3() {
+  drawMyopia2();
+  const W=canvas.width, H=canvas.height, mid=H/2;
+
+  // add virtual image indicator
+  const vix = W*0.15;
+  ctx.save();
+  ctx.strokeStyle=C.virtual; ctx.lineWidth=2; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(vix, mid); ctx.lineTo(vix, mid-30); ctx.stroke();
+  ctx.fillStyle=C.virtual;
+  ctx.beginPath(); ctx.moveTo(vix-5,mid-24); ctx.lineTo(vix,mid-36); ctx.lineTo(vix+5,mid-24); ctx.fill();
+  ctx.restore();
+  drawLabel(vix, mid+16, 'Virtual image', C.teal, 'center', 10);
+  drawLabel(vix, mid+27, '(closer, in range)', C.teal, 'center', 10);
+}
+
+// ─── TELESCOPE DRAWINGS ───
+function drawTelescope0() {
+  const W=canvas.width, H=canvas.height, mid=H/2;
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 10, W-10);
+
+  // parallel rays
+  [-28,-14,0,14,28].forEach(dy => {
+    drawArrow(20, mid+dy, W-30, mid+dy, C.ray, 2);
+  });
+  drawLabel(W/2, mid-42, 'Parallel rays from distant star', C.label, 'center', 11);
+
+  // star icon
+  ctx.save();
+  ctx.fillStyle = '#ffe066';
+  ctx.font = '24px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('★', 30, mid-44);
+  ctx.restore();
+  drawLabel(30, mid-26, 'Star', '#ffe066', 'center', 9);
+}
+
+function drawTelescope1() {
+  const W=canvas.width, H=canvas.height, mid=H/2;
+  const lx = W*0.3, fpX = W*0.62;
+
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 10, W-10);
+
+  // converging objective
+  ctx.save();
+  const ot = mid-75, ob = mid+75;
+  ctx.strokeStyle = C.purple; ctx.lineWidth=2.5; ctx.fillStyle='rgba(199,125,255,0.07)';
+  ctx.beginPath();
+  ctx.moveTo(lx, ot);
+  ctx.quadraticCurveTo(lx+22, mid, lx, ob);
+  ctx.quadraticCurveTo(lx-22, mid, lx, ot);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle=C.purple;
+  ctx.beginPath(); ctx.moveTo(lx-5,ot+10); ctx.lineTo(lx,ot-2); ctx.lineTo(lx+5,ot+10); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(lx-5,ob-10); ctx.lineTo(lx,ob+2); ctx.lineTo(lx+5,ob-10); ctx.fill();
+  ctx.restore();
+  drawLabel(lx, ob+16, 'Converging objective', C.purple, 'center', 10);
+
+  // incoming parallel
+  [-28,-10,0,10,28].forEach(dy => {
+    ctx.save(); ctx.strokeStyle=C.ray; ctx.lineWidth=1.8; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(20, mid+dy); ctx.lineTo(lx, mid+dy); ctx.stroke();
+    ctx.restore();
+  });
+
+  // converging after objective
+  drawArrow(lx, mid-28, fpX, mid, C.ray, 2);
+  drawArrow(lx, mid-10, fpX, mid, C.ray, 1.6);
+  drawArrow(lx, mid, fpX, mid, C.ray, 1.6);
+  drawArrow(lx, mid+10, fpX, mid, C.ray, 1.6);
+  drawArrow(lx, mid+28, fpX, mid, C.ray, 2);
+
+  drawFocalPoint(fpX, mid, 'Focal point', C.amber);
+}
+
+function drawTelescope2() {
+  const W=canvas.width, H=canvas.height, mid=H/2;
+  const objX=W*0.22, eyeX=W*0.58, fpX=W*0.52;
+
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 10, W-10);
+
+  // objective
+  ctx.save();
+  ctx.strokeStyle=C.purple; ctx.lineWidth=2.5; ctx.fillStyle='rgba(199,125,255,0.07)';
+  const ot=mid-65, ob=mid+65;
+  ctx.beginPath(); ctx.moveTo(objX,ot); ctx.quadraticCurveTo(objX+18,mid,objX,ob); ctx.quadraticCurveTo(objX-18,mid,objX,ot); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=C.purple;
+  ctx.beginPath(); ctx.moveTo(objX-4,ot+9); ctx.lineTo(objX,ot-2); ctx.lineTo(objX+4,ot+9); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(objX-4,ob-9); ctx.lineTo(objX,ob+2); ctx.lineTo(objX+4,ob-9); ctx.fill();
+  ctx.restore();
+
+  // diverging eyepiece
+  drawLens(eyeX, mid-55, mid+55, C.lens);
+  drawLabel(eyeX, mid+70, 'Diverging eyepiece', C.lens, 'center', 10);
+
+  // incoming
+  [-20,0,20].forEach(dy => {
+    ctx.save(); ctx.strokeStyle=C.ray; ctx.lineWidth=1.8; ctx.globalAlpha=0.6;
+    ctx.beginPath(); ctx.moveTo(10, mid+dy); ctx.lineTo(objX, mid+dy); ctx.stroke();
+    ctx.restore();
+  });
+
+  // converging to eyepiece
+  drawArrow(objX, mid-20, eyeX, mid-8, C.ray, 2);
+  drawArrow(objX, mid,    eyeX, mid,   C.ray, 2);
+  drawArrow(objX, mid+20, eyeX, mid+8, C.ray, 2);
+
+  // parallel out
+  drawArrow(eyeX, mid-8,  W-30, mid-8,  C.ray, 2);
+  drawArrow(eyeX, mid,    W-30, mid,    C.ray, 2);
+  drawArrow(eyeX, mid+8,  W-30, mid+8,  C.ray, 2);
+
+  drawLabel(W*0.75, mid-22, 'Parallel rays out', C.teal, 'center', 10);
+
+  drawFocalPoint(fpX, mid, '', C.amber);
+  drawLabel(fpX, mid+18, '(intercepted!)', C.amber, 'center', 9);
+}
+
+function drawTelescope3() {
+  drawTelescope2();
+  const W=canvas.width, H=canvas.height, mid=H/2;
+
+  // eye at end
+  drawEye(W-18, mid);
+
+  // upright arrows showing magnified image
+  ctx.save();
+  ctx.strokeStyle=C.green; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(20,mid); ctx.lineTo(20,mid-18); ctx.stroke();
+  ctx.fillStyle=C.green;
+  ctx.beginPath(); ctx.moveTo(15,mid-12); ctx.lineTo(20,mid-24); ctx.lineTo(25,mid-12); ctx.fill();
+  ctx.restore();
+  drawLabel(20, mid+16, 'Object', C.label, 'center', 9);
+
+  ctx.save();
+  ctx.strokeStyle=C.green; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(W-45,mid); ctx.lineTo(W-45,mid-40); ctx.stroke();
+  ctx.fillStyle=C.green;
+  ctx.beginPath(); ctx.moveTo(W-50,mid-32); ctx.lineTo(W-45,mid-48); ctx.lineTo(W-40,mid-32); ctx.fill();
+  ctx.restore();
+  drawLabel(W-45, mid+16, 'Magnified!', C.green, 'center', 9);
+  drawLabel(W-45, mid+27, '(upright ✓)', C.green, 'center', 9);
+}
+
+// ─── LASER DRAWINGS ───
+function drawLaser0() {
+  const W=canvas.width, H=canvas.height, mid=H/2;
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 10, W-10);
+
+  // laser source
+  ctx.save();
+  ctx.fillStyle='rgba(0,230,118,0.15)'; ctx.strokeStyle=C.green; ctx.lineWidth=1.5;
+  roundRect(ctx, 10, mid-14, 60, 28, 6);
+  ctx.fill(); ctx.stroke();
+  drawLabel(40, mid+5, 'LASER', C.green, 'center', 11);
+  ctx.restore();
+
+  // narrow beam
+  ctx.save();
+  ctx.strokeStyle=C.green; ctx.lineWidth=5; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(70, mid-3); ctx.lineTo(W-30, mid-3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(70, mid+3); ctx.lineTo(W-30, mid+3); ctx.stroke();
+  ctx.restore();
+
+  // danger zone shade
+  ctx.save();
+  ctx.fillStyle='rgba(255,107,107,0.07)';
+  ctx.fillRect(70, mid-3, W-100, 6);
+  ctx.restore();
+
+  drawLabel(W/2, mid-20, '⚡ Very narrow = very high energy density', C.red, 'center', 11);
+  drawLabel(W-30, mid+20, '⚠ Dangerous', C.red, 'right', 10);
+}
+
+function drawLaser1() {
+  const W=canvas.width, H=canvas.height, mid=H/2;
+  const lx=W*0.4;
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 10, W-10);
+
+  ctx.save();
+  ctx.fillStyle='rgba(0,230,118,0.15)'; ctx.strokeStyle=C.green; ctx.lineWidth=1.5;
+  roundRect(ctx, 10, mid-14, 60, 28, 6);
+  ctx.fill(); ctx.stroke();
+  drawLabel(40, mid+5, 'LASER', C.green, 'center', 11);
+  ctx.restore();
+
+  ctx.save(); ctx.strokeStyle=C.green; ctx.lineWidth=4; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(70, mid-3); ctx.lineTo(lx, mid-3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(70, mid+3); ctx.lineTo(lx, mid+3); ctx.stroke();
+  ctx.restore();
+
+  drawLens(lx, mid-60, mid+60, C.lens);
+  drawLabel(lx, mid+76, 'Diverging lens', C.lens, 'center', 10);
+
+  drawArrow(lx, mid-3, W-30, mid-40, C.green, 2.5);
+  drawArrow(lx, mid,   W-30, mid,    C.green, 2.5);
+  drawArrow(lx, mid+3, W-30, mid+40, C.green, 2.5);
+
+  drawLabel(W*0.72, mid-22, 'Beam spreads', C.teal, 'center', 10);
+  drawLabel(W*0.72, mid-11, 'outward', C.teal, 'center', 10);
+}
+
+function drawLaser2() {
+  const W=canvas.width, H=canvas.height, mid=H/2;
+  const lx1=W*0.3, lx2=W*0.6;
+  ctx.clearRect(0,0,W,H);
+  drawAxis(mid, 10, W-10);
+
+  ctx.save();
+  ctx.fillStyle='rgba(0,230,118,0.15)'; ctx.strokeStyle=C.green; ctx.lineWidth=1.5;
+  roundRect(ctx, 10, mid-14, 60, 28, 6);
+  ctx.fill(); ctx.stroke();
+  drawLabel(40, mid+5, 'LASER', C.green, 'center', 11);
+  ctx.restore();
+
+  // narrow in
+  ctx.save(); ctx.strokeStyle=C.green; ctx.lineWidth=4; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(70, mid-3); ctx.lineTo(lx1, mid-3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(70, mid+3); ctx.lineTo(lx1, mid+3); ctx.stroke();
+  ctx.restore();
+
+  drawLens(lx1, mid-60, mid+60, C.lens);
+  drawLabel(lx1, mid+76, 'Diverging', C.lens, 'center', 10);
+
+  // diverge
+  ctx.save(); ctx.strokeStyle=C.green; ctx.lineWidth=2; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(lx1, mid-3); ctx.lineTo(lx2, mid-40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(lx1, mid); ctx.lineTo(lx2, mid); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(lx1, mid+3); ctx.lineTo(lx2, mid+40); ctx.stroke();
+  ctx.restore();
+
+  // converging lens (bigger)
+  ctx.save();
+  ctx.strokeStyle=C.amber; ctx.lineWidth=2.5; ctx.fillStyle='rgba(245,166,35,0.07)';
+  const ct=mid-75, cb=mid+75;
+  ctx.beginPath(); ctx.moveTo(lx2,ct); ctx.quadraticCurveTo(lx2+20,mid,lx2,cb); ctx.quadraticCurveTo(lx2-20,mid,lx2,ct); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=C.amber;
+  ctx.beginPath(); ctx.moveTo(lx2-5,ct+10); ctx.lineTo(lx2,ct-2); ctx.lineTo(lx2+5,ct+10); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(lx2-5,cb-10); ctx.lineTo(lx2,cb+2); ctx.lineTo(lx2+5,cb-10); ctx.fill();
+  ctx.restore();
+  drawLabel(lx2, cb+16, 'Converging', C.amber, 'center', 10);
+
+  drawArrow(lx2, mid-40, W-20, mid-40, C.green, 3);
+  drawArrow(lx2, mid, W-20, mid, C.green, 3);
+  drawArrow(lx2, mid+40, W-20, mid+40, C.green, 3);
+
+  drawLabel(W*0.82, mid-54, 'Wide parallel', C.green, 'center', 10);
+  drawLabel(W*0.82, mid-43, 'beam out', C.green, 'center', 10);
+}
+
+function drawLaser3() {
+  drawLaser2();
+  const W=canvas.width, H=canvas.height, mid=H/2;
+
+  // annotations
+  drawLabel(W*0.18, mid-22, 'Narrow', C.label, 'center', 10);
+  drawLabel(W*0.18, mid-11, '(dangerous)', C.red, 'center', 10);
+  drawLabel(W*0.88, mid-58, '5× wider', C.green, 'center', 10);
+  drawLabel(W*0.88, mid-47, '(safe ✓)', C.green, 'center', 10);
+
+  ctx.save();
+  ctx.strokeStyle=C.green; ctx.lineWidth=1.5; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(W*0.78, mid-40); ctx.lineTo(W*0.78, mid+40); ctx.stroke();
+  ctx.restore();
+  const bw = (mid+40)-(mid-40);
+  drawLabel(W*0.78+4, mid+55, `Beam width: ${bw.toFixed(0)}px`, C.teal, 'left', 9);
+}
+
+// ─── EYE HELPER ───
+function drawEye(cx, cy) {
+  ctx.save();
+  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1.5;
+  ctx.fillStyle='rgba(255,255,255,0.05)';
+  ctx.beginPath(); ctx.ellipse(cx, cy, 10, 14, 0, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#1B98A0';
+  ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+// ─── RENDER STEP ───
+function renderStep() {
+  resize();
+  const app = APPS[currentApp];
+  const step = app.steps[currentStep];
+  step.draw && step.draw();
+  updateUI();
+}
+
+function updateUI() {
+  const app = APPS[currentApp];
+  const step = app.steps[currentStep];
+  const total = app.steps.length;
+
+  document.getElementById('canvas-title').textContent = app.title;
+
+  const badge = document.getElementById('step-badge');
+  badge.textContent = `STEP ${currentStep+1} / ${total}`;
+  badge.style.background = app.badge.bg;
+  badge.style.color = app.badge.color;
+
+  // dots
+  const dotsEl = document.getElementById('step-dots');
+  dotsEl.innerHTML = '';
+  for(let i=0; i<total; i++){
+    const d = document.createElement('div');
+    d.className = 'step-dot' + (i < currentStep ? ' done' : i===currentStep ? ' active' : '');
+    d.onclick = () => { currentStep=i; renderStep(); };
+    dotsEl.appendChild(d);
+  }
+
+  document.getElementById('prev-btn').disabled = currentStep===0;
+  document.getElementById('next-btn').disabled = currentStep===total-1;
+  document.getElementById('next-btn').textContent = currentStep===total-1 ? 'Done ✓' : 'Next →';
+
+  // info card
+  const card = document.getElementById('info-card');
+  const factClass = step.factType ? ` ${step.factType}` : '';
+  card.innerHTML = `
+    <div class="info-step-num" style="color:${app.color}">STEP ${currentStep+1} — ${currentApp.toUpperCase()}</div>
+    <div class="info-title">${step.title}</div>
+    <div class="info-body">${step.body}</div>
+    ${step.fact ? `<div class="key-fact${factClass}">${step.fact}</div>` : ''}
+  `;
+}
+
+function nextStep() {
+  const total = APPS[currentApp].steps.length;
+  if(currentStep < total-1){ currentStep++; renderStep(); }
+}
+function prevStep() {
+  if(currentStep > 0){ currentStep--; renderStep(); }
+}
+
+function switchApp(app) {
+  currentApp = app;
+  currentStep = 0;
+
+  document.querySelectorAll('.app-tab').forEach(t => t.classList.toggle('active', t.dataset.app===app));
+  document.querySelectorAll('.overview-item').forEach(t => t.classList.toggle('active', t.dataset.app===app));
+
+  renderStep();
+}
+
+// Init
+window.addEventListener('resize', () => renderStep());
+renderStep();
+</script>
+</body>
+</html>

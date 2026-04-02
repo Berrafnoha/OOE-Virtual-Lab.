@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MISSION 5 — Scout The Exit</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #f0ebe0;
+  --paper: #e8e2d4;
+  --red: #b81c1c;
+  --red2: #8a1111;
+  --black: #0d0d0d;
+  --ink: #1a1a1a;
+  --muted: #6b6258;
+  --grid: rgba(100,140,200,0.18);
+  --blue: #1a3a6b;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* GRID PAPER BACKGROUND */
+body::before {
+  content:'';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    linear-gradient(rgba(100,140,200,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100,140,200,0.06) 1px, transparent 1px);
+  background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* SCANLINE OVERLAY */
+body::after {
+  content:'';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.012) 2px,
+    rgba(0,0,0,0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.page { position: relative; z-index: 1; }
+
+/* ── TOP HEADER ── */
+.classified-bar {
+  background: var(--red);
+  color: #fff;
+  text-align: center;
+  padding: 7px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 6px;
+  font-weight: 700;
+}
+
+.header {
+  padding: 36px 60px 28px;
+  border-bottom: 3px solid var(--black);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.mission-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.78rem;
+  letter-spacing: 4px;
+  color: var(--red);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.mission-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(3rem, 8vw, 5.5rem);
+  line-height: 0.9;
+  color: var(--black);
+  letter-spacing: 2px;
+}
+
+.mission-title span { color: var(--red); }
+
+.header-meta {
+  text-align: right;
+}
+.header-meta .meta-row {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 3px;
+}
+.status-badge {
+  display: inline-block;
+  background: var(--black);
+  color: #fff;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  padding: 6px 16px;
+  margin-top: 8px;
+}
+
+/* ── OBJECTIVE BOX ── */
+.objective-strip {
+  margin: 0 60px 0;
+  border: 2.5px solid var(--black);
+  border-top: none;
+  padding: 20px 28px;
+  background: var(--paper);
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+.obj-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.obj-bullet {
+  width: 10px; height: 10px;
+  background: var(--red);
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.obj-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--red);
+  letter-spacing: 2px;
+  margin-bottom: 3px;
+}
+.obj-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+/* ── MAIN LAYOUT ── */
+.main {
+  padding: 30px 60px 60px;
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 24px;
+}
+
+/* ── CANVAS PANEL ── */
+.canvas-panel {
+  border: 2.5px solid var(--black);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.panel-header {
+  background: var(--black);
+  color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+}
+
+.phase-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: var(--red);
+  border: 1px solid var(--red);
+  padding: 4px 10px;
+}
+
+.diagram-wrap {
+  padding: 20px;
+  position: relative;
+}
+
+canvas#lensCanvas {
+  display: block;
+  width: 100%;
+  border: 1.5px solid rgba(0,0,0,0.15);
+  background: #fff;
+}
+
+/* TABS */
+.sim-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--black);
+}
+.sim-tab {
+  flex: 1;
+  padding: 10px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  background: var(--paper);
+  border: none;
+  color: var(--muted);
+  border-right: 1px solid var(--black);
+  transition: all 0.2s;
+}
+.sim-tab:last-child { border-right: none; }
+.sim-tab.active { background: var(--black); color: #fff; }
+.sim-tab:hover:not(.active) { background: #d8d2c2; }
+
+/* TAB CONTENT */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* PEEPHOLE VIEW */
+.peephole-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+canvas#peepholeCanvas {
+  border-radius: 50%;
+  border: 8px solid var(--black);
+  box-shadow: 0 0 0 20px #111, 0 0 0 22px #333;
+}
+
+.peephole-legend {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--ink);
+  line-height: 2;
+}
+.legend-row { display: flex; align-items: center; gap: 8px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* ── CONTROLS ── */
+.controls-section {
+  padding: 0 20px 20px;
+}
+
+.control-group {
+  margin-bottom: 16px;
+}
+
+.ctrl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.ctrl-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--ink);
+  letter-spacing: 1px;
+}
+
+.ctrl-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.3rem;
+  color: var(--red);
+  letter-spacing: 1px;
+}
+
+input[type=range] {
+  width: 100%;
+  accent-color: var(--red);
+  cursor: pointer;
+  height: 4px;
+}
+
+/* ── SIDE PANEL ── */
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* INTEL BOX */
+.intel-box {
+  border: 2.5px solid var(--black);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.intel-header {
+  background: var(--black);
+  color: #fff;
+  padding: 10px 16px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.intel-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 2px;
+  color: var(--red);
+}
+
+.intel-body { padding: 16px; }
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+.data-row:last-child { border-bottom: none; }
+
+.data-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 1px;
+  line-height: 1.5;
+}
+.data-label strong { color: var(--ink); display: block; }
+
+.data-val {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 1px;
+  text-align: right;
+}
+.data-val.positive { color: var(--blue); }
+.data-val.negative { color: var(--red); }
+.data-val.neutral  { color: var(--ink); }
+
+.data-unit {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--muted);
+  display: block;
+  text-align: right;
+}
+
+/* FORMULA BOX */
+.formula-box {
+  border: 2.5px solid var(--black);
+  background: var(--paper);
+}
+
+.formula-header {
+  background: var(--red);
+  color: #fff;
+  padding: 10px 16px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+}
+
+.formula-body { padding: 16px; }
+
+.formula-step {
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px dashed rgba(0,0,0,0.2);
+}
+.formula-step:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+.f-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 2px;
+  color: var(--red);
+  margin-bottom: 4px;
+}
+
+.f-equation {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--ink);
+  line-height: 1.8;
+}
+
+.f-result {
+  display: inline-block;
+  background: var(--black);
+  color: #fff;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1rem;
+  padding: 3px 12px;
+  letter-spacing: 2px;
+  margin-top: 4px;
+}
+.f-result.red { background: var(--red); }
+
+/* ANALYSIS BOX */
+.analysis-box {
+  border: 2.5px solid var(--black);
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.analysis-header {
+  background: var(--blue);
+  color: #fff;
+  padding: 10px 16px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+}
+
+.analysis-body { padding: 16px; }
+
+.analysis-item {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+.analysis-item:last-child { margin-bottom: 0; }
+
+.a-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.a-text {
+  font-size: 0.84rem;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.a-text strong { color: var(--red); }
+
+/* MISSION RESULT */
+.mission-result {
+  border: 3px solid var(--red);
+  background: var(--red);
+  color: #fff;
+  padding: 18px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.mission-result::before {
+  content: '';
+  position: absolute; inset: 4px;
+  border: 1px solid rgba(255,255,255,0.3);
+  pointer-events: none;
+}
+
+.mission-result-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 4px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.mission-result-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.mission-result-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.7rem;
+  opacity: 0.85;
+  margin-top: 6px;
+}
+
+/* FOOTER */
+.footer-bar {
+  margin: 0 60px 40px;
+  border: 2px solid var(--black);
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--paper);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.footer-formula {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.footer-formula span { color: var(--ink); font-weight: 700; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; padding: 20px 20px 40px; }
+  .header { padding: 24px 20px 20px; }
+  .objective-strip { margin: 0 20px 0; }
+  .footer-bar { margin: 0 20px 30px; }
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.intel-box, .formula-box, .analysis-box, .mission-result {
+  animation: fadeUp 0.5s ease both;
+}
+.intel-box { animation-delay: 0.1s; }
+.formula-box { animation-delay: 0.2s; }
+.analysis-box { animation-delay: 0.3s; }
+.mission-result { animation-delay: 0.4s; }
+
+/* BLINK cursor */
+@keyframes blink { 50% { opacity: 0; } }
+.cursor { animation: blink 1s step-end infinite; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- TOP BAR -->
+  <div class="classified-bar">⚠ CLASSIFIED — ENSTA PHYSICS DIVISION — MISSION 5 ⚠</div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div>
+      <div class="mission-label">// Mission 05 · Geometric Optics</div>
+      <div class="mission-title">SCOUT<br><span>THE EXIT</span></div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-row">SUPERVISOR: DR. CHEGGOU RABÉA</div>
+      <div class="meta-row">MODULE: OOE · LEVEL: MI2</div>
+      <div class="meta-row">UNIT: DIVERGING LENS SIMULATION</div>
+      <div class="status-badge">● SIMULATION ACTIVE</div>
+    </div>
+  </header>
+
+  <!-- OBJECTIVE -->
+  <div class="objective-strip">
+    <div class="obj-item">
+      <div class="obj-bullet"></div>
+      <div>
+        <div class="obj-label">OBJECTIVE</div>
+        <div class="obj-text">Secure a line of sight through the peephole</div>
+      </div>
+    </div>
+    <div class="obj-item">
+      <div class="obj-bullet"></div>
+      <div>
+        <div class="obj-label">TARGET</div>
+        <div class="obj-text">A 1.80 m guard — 50 cm from the door</div>
+      </div>
+    </div>
+    <div class="obj-item">
+      <div class="obj-bullet"></div>
+      <div>
+        <div class="obj-label">CONSTRAINT</div>
+        <div class="obj-text">Diverging lens required — f′ = −10 cm</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT: CANVAS -->
+    <div>
+      <div class="canvas-panel">
+        <div class="panel-header">
+          <div class="panel-title">TACTICAL SIMULATION</div>
+          <div class="phase-badge">EXECUTION PHASE</div>
+        </div>
+
+        <!-- TABS -->
+        <div class="sim-tabs">
+          <button class="sim-tab active" onclick="switchTab('lens')">LENS DIAGRAM</button>
+          <button class="sim-tab" onclick="switchTab('peephole')">PEEPHOLE VIEW</button>
+        </div>
+
+        <!-- TAB: LENS DIAGRAM -->
+        <div class="tab-content active" id="tab-lens">
+          <div class="diagram-wrap">
+            <canvas id="lensCanvas" height="280"></canvas>
+          </div>
+        </div>
+
+        <!-- TAB: PEEPHOLE VIEW -->
+        <div class="tab-content" id="tab-peephole">
+          <div class="peephole-wrap">
+            <div>
+              <div style="text-align:center; font-family:'Share Tech Mono',monospace; font-size:0.65rem; letter-spacing:3px; color:var(--muted); margin-bottom:12px;">WITHOUT LENS</div>
+              <canvas id="peepholeNoLens" width="200" height="200" style="border-radius:50%; border:8px solid var(--black); box-shadow: 0 0 0 18px #111, 0 0 0 20px #444;"></canvas>
+            </div>
+            <div style="font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--black); align-self:center;">→</div>
+            <div>
+              <div style="text-align:center; font-family:'Share Tech Mono',monospace; font-size:0.65rem; letter-spacing:3px; color:var(--muted); margin-bottom:12px;">WITH DIVERGING LENS</div>
+              <canvas id="peepholeWithLens" width="200" height="200" style="border-radius:50%; border:8px solid var(--red); box-shadow: 0 0 0 18px #111, 0 0 0 20px #444;"></canvas>
+            </div>
+          </div>
+          <div style="padding:0 20px 20px; font-family:'Share Tech Mono',monospace; font-size:0.72rem; color:var(--muted); text-align:center; letter-spacing:1px;">
+            The guard's virtual image (<span id="peepImgH" style="color:var(--red)">30</span> cm) fits inside the peephole's angular field of view ✓
+          </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="controls-section">
+          <div style="font-family:'Share Tech Mono',monospace; font-size:0.68rem; letter-spacing:3px; color:var(--red); margin-bottom:14px; padding-top:8px; border-top:1.5px solid #ccc;">
+            ▶ ADJUST PARAMETERS
+          </div>
+
+          <div class="control-group">
+            <div class="ctrl-row">
+              <div class="ctrl-name">OBJECT HEIGHT — AB</div>
+              <div class="ctrl-val" id="valAB">1.80 m</div>
+            </div>
+            <input type="range" id="slAB" min="50" max="300" value="180" step="10" oninput="update()">
+          </div>
+
+          <div class="control-group">
+            <div class="ctrl-row">
+              <div class="ctrl-name">OBJECT DISTANCE — OA (cm)</div>
+              <div class="ctrl-val" id="valOA">-50 cm</div>
+            </div>
+            <input type="range" id="slOA" min="20" max="150" value="50" step="5" oninput="update()">
+          </div>
+
+          <div class="control-group">
+            <div class="ctrl-row">
+              <div class="ctrl-name">FOCAL LENGTH — f′ (cm)</div>
+              <div class="ctrl-val" id="valF">-10 cm</div>
+            </div>
+            <input type="range" id="slF" min="5" max="40" value="10" step="1" oninput="update()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: SIDE PANEL -->
+    <div class="side-panel">
+
+      <!-- INTEL -->
+      <div class="intel-box">
+        <div class="intel-header">
+          INTELLIGENCE REPORT
+          <div class="intel-sub">LIVE DATA</div>
+        </div>
+        <div class="intel-body">
+          <div class="data-row">
+            <div class="data-label">
+              <strong>OPTICAL POWER</strong>
+              P = 1 / f′
+            </div>
+            <div>
+              <div class="data-val negative" id="resP">-10.0</div>
+              <div class="data-unit">diopters</div>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-label">
+              <strong>IMAGE DISTANCE</strong>
+              OA′ (thin lens eq.)
+            </div>
+            <div>
+              <div class="data-val negative" id="resOAp">-8.33</div>
+              <div class="data-unit">cm</div>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-label">
+              <strong>MAGNIFICATION</strong>
+              M = OA′ / OA
+            </div>
+            <div>
+              <div class="data-val positive" id="resM">+0.167</div>
+              <div class="data-unit">upright virtual</div>
+            </div>
+          </div>
+          <div class="data-row">
+            <div class="data-label">
+              <strong>IMAGE HEIGHT</strong>
+              A′B′ = M × AB
+            </div>
+            <div>
+              <div class="data-val neutral" id="resABp">30</div>
+              <div class="data-unit">cm</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORMULAS -->
+      <div class="formula-box">
+        <div class="formula-header">EXECUTION PHASE</div>
+        <div class="formula-body">
+          <div class="formula-step">
+            <div class="f-label">STEP 1 — OPTICAL POWER</div>
+            <div class="f-equation">P = 1 / f′<br>P = 1 / (<span id="f1_f">−0.10</span> m)</div>
+            <div class="f-result red" id="f1_res">P = −10 diopters</div>
+          </div>
+          <div class="formula-step">
+            <div class="f-label">STEP 2 — IMAGE POSITION</div>
+            <div class="f-equation">1/OA′ − 1/OA = 1/f′<br>1/OA′ = 1/(<span id="f2_f">−10</span>) + 1/(<span id="f2_OA">−50</span>)</div>
+            <div class="f-result" id="f2_res">OA′ ≈ −8.33 cm</div>
+          </div>
+          <div class="formula-step">
+            <div class="f-label">STEP 3 — MAGNIFICATION</div>
+            <div class="f-equation">M = OA′ / OA<br>M = (<span id="f3_OAp">−8.33</span>) / (<span id="f3_OA">−50</span>)</div>
+            <div class="f-result red" id="f3_res">M = +0.167 (upright)</div>
+          </div>
+          <div class="formula-step">
+            <div class="f-label">STEP 4 — IMAGE HEIGHT</div>
+            <div class="f-equation">A′B′ = M × AB<br>A′B′ = <span id="f4_M">0.167</span> × <span id="f4_AB">1.80</span> m</div>
+            <div class="f-result" id="f4_res">A′B′ = 0.30 m (30 cm)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANALYSIS -->
+      <div class="analysis-box">
+        <div class="analysis-header">FIELD ANALYSIS</div>
+        <div class="analysis-body">
+          <div class="analysis-item">
+            <div class="a-icon">📌</div>
+            <div class="a-text">Image is <strong>virtual</strong> — OA′ is negative, formed on the same side as the guard.</div>
+          </div>
+          <div class="analysis-item">
+            <div class="a-icon">↕</div>
+            <div class="a-text">Image is <strong>upright</strong> — M is positive. The guard appears right-side up.</div>
+          </div>
+          <div class="analysis-item">
+            <div class="a-icon">🔍</div>
+            <div class="a-text">Image is <strong>reduced</strong> — M &lt; 1. Guard fits within the peephole's angular FOV.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MISSION RESULT -->
+      <div class="mission-result">
+        <div class="mission-result-label">// MISSION STATUS</div>
+        <div class="mission-result-value">EXIT SCOUTED ✓</div>
+        <div class="mission-result-sub">1.80 m threat → <span id="mr_val">30 cm</span> virtual image @ <span id="mr_dist">8.33 cm</span> from lens</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-bar">
+    <div class="footer-formula">
+      <span>THIN LENS EQ:</span> 1/OA′ − 1/OA = 1/f′ &nbsp;|&nbsp;
+      <span>POWER:</span> P = 1/f′ &nbsp;|&nbsp;
+      <span>MAGNIFICATION:</span> M = OA′/OA &nbsp;|&nbsp;
+      <span>IMAGE HEIGHT:</span> A′B′ = M × AB
+    </div>
+    <div class="footer-formula">
+      ENSTA · OOE · MI2 <span class="cursor">_</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── STATE ──
+let AB_m = 1.80, OA_cm = -50, f_cm = -10;
+
+function getVals() {
+  AB_m  =  parseInt(document.getElementById('slAB').value) / 100;
+  OA_cm = -parseInt(document.getElementById('slOA').value);
+  f_cm  = -parseInt(document.getElementById('slF').value);
+}
+
+function calcOptics() {
+  // P = 1/f (f in meters)
+  const f_m = f_cm / 100;
+  const P = 1 / f_m;
+
+  // 1/OA' = 1/f' + 1/OA
+  const OAp_cm = 1 / (1/f_cm + 1/OA_cm);
+
+  // M = OA'/OA
+  const M = OAp_cm / OA_cm;
+
+  // A'B' = M * AB
+  const ABp_m = M * AB_m;
+  const ABp_cm = ABp_m * 100;
+
+  return { P, OAp_cm, M, ABp_cm, ABp_m, f_m };
+}
+
+function update() {
+  getVals();
+  const { P, OAp_cm, M, ABp_cm, ABp_m, f_m } = calcOptics();
+
+  // Update display labels
+  document.getElementById('valAB').textContent = AB_m.toFixed(2) + ' m';
+  document.getElementById('valOA').textContent = OA_cm.toFixed(0) + ' cm';
+  document.getElementById('valF').textContent  = f_cm.toFixed(0) + ' cm';
+
+  // INTEL
+  document.getElementById('resP').textContent   = P.toFixed(1);
+  document.getElementById('resP').className     = 'data-val ' + (P < 0 ? 'negative' : 'positive');
+  document.getElementById('resOAp').textContent = OAp_cm.toFixed(2);
+  document.getElementById('resOAp').className   = 'data-val ' + (OAp_cm < 0 ? 'negative' : 'positive');
+  document.getElementById('resM').textContent   = (M >= 0 ? '+' : '') + M.toFixed(3);
+  document.getElementById('resM').className     = 'data-val ' + (M > 0 ? 'positive' : 'negative');
+  document.getElementById('resABp').textContent = Math.abs(ABp_cm).toFixed(1);
+
+  // FORMULAS
+  document.getElementById('f1_f').textContent   = f_m.toFixed(2);
+  document.getElementById('f1_res').textContent  = 'P = ' + P.toFixed(1) + ' diopters';
+  document.getElementById('f2_f').textContent   = f_cm.toFixed(0);
+  document.getElementById('f2_OA').textContent  = OA_cm.toFixed(0);
+  document.getElementById('f2_res').textContent  = 'OA′ ≈ ' + OAp_cm.toFixed(2) + ' cm';
+  document.getElementById('f3_OAp').textContent = OAp_cm.toFixed(2);
+  document.getElementById('f3_OA').textContent  = OA_cm.toFixed(0);
+  document.getElementById('f3_res').textContent  = 'M = ' + (M>=0?'+':'') + M.toFixed(3) + (M>0?' (upright)':' (inverted)');
+  document.getElementById('f4_M').textContent   = Math.abs(M).toFixed(3);
+  document.getElementById('f4_AB').textContent  = AB_m.toFixed(2);
+  document.getElementById('f4_res').textContent  = 'A\'B\' = ' + Math.abs(ABp_m).toFixed(2) + ' m (' + Math.abs(ABp_cm).toFixed(1) + ' cm)';
+
+  // MISSION RESULT
+  document.getElementById('mr_val').textContent  = Math.abs(ABp_cm).toFixed(1) + ' cm';
+  document.getElementById('mr_dist').textContent = Math.abs(OAp_cm).toFixed(2) + ' cm';
+  document.getElementById('peepImgH').textContent = Math.abs(ABp_cm).toFixed(1);
+
+  // DRAW
+  drawLensCanvas();
+  drawPeepholeViews();
+}
+
+// ── LENS CANVAS ──
+const lensC  = document.getElementById('lensCanvas');
+const lctx   = lensC.getContext('2d');
+
+function resizeLens() {
+  lensC.width = lensC.offsetWidth;
+  lensC.height = 280;
+}
+
+function drawLensCanvas() {
+  resizeLens();
+  const W = lensC.width, H = lensC.height;
+  const mid = H / 2;
+  lctx.clearRect(0, 0, W, H);
+
+  const { OAp_cm, M, ABp_cm } = calcOptics();
+
+  // Scale: fit object at OA_cm
+  const pxPerCm = Math.min((W * 0.38) / Math.abs(OA_cm), 4.5);
+  const lensX   = W * 0.55;
+  const objX    = lensX + OA_cm * pxPerCm;    // OA is negative → left of lens
+  const imgX    = lensX + OAp_cm * pxPerCm;   // OA' negative → left of lens (virtual)
+  const fX_l    = lensX + f_cm * pxPerCm;      // focal point left
+
+  // ── GRID BACKGROUND ──
+  lctx.save();
+  lctx.strokeStyle = 'rgba(100,140,200,0.12)';
+  lctx.lineWidth = 0.5;
+  for(let x=0; x<W; x+=20){ lctx.beginPath(); lctx.moveTo(x,0); lctx.lineTo(x,H); lctx.stroke(); }
+  for(let y=0; y<H; y+=20){ lctx.beginPath(); lctx.moveTo(0,y); lctx.lineTo(W,y); lctx.stroke(); }
+  lctx.restore();
+
+  // ── OPTICAL AXIS ──
+  lctx.save();
+  lctx.strokeStyle = '#888'; lctx.lineWidth = 1;
+  lctx.setLineDash([6,4]);
+  lctx.beginPath(); lctx.moveTo(10, mid); lctx.lineTo(W-10, mid); lctx.stroke();
+  lctx.restore();
+
+  // ── FOCAL POINT LEFT ──
+  lctx.save();
+  lctx.fillStyle = '#b81c1c';
+  lctx.beginPath(); lctx.arc(fX_l, mid, 5, 0, Math.PI*2); lctx.fill();
+  lctx.font = '500 10px Barlow, sans-serif';
+  lctx.fillStyle = '#b81c1c';
+  lctx.textAlign = 'center';
+  lctx.fillText('F\'', fX_l, mid - 10);
+  lctx.restore();
+
+  // ── VIRTUAL IMAGE (dashed) ──
+  const imgH_px = Math.abs(M) * 60 * Math.min(1, 2 / Math.abs(M));
+  lctx.save();
+  lctx.strokeStyle = '#b81c1c';
+  lctx.lineWidth = 2;
+  lctx.setLineDash([5,4]);
+  lctx.beginPath(); lctx.moveTo(imgX, mid); lctx.lineTo(imgX, mid - imgH_px); lctx.stroke();
+  lctx.setLineDash([]);
+  // Arrow tip
+  lctx.fillStyle = '#b81c1c';
+  lctx.beginPath(); lctx.moveTo(imgX-5, mid-imgH_px+8); lctx.lineTo(imgX, mid-imgH_px-2); lctx.lineTo(imgX+5, mid-imgH_px+8); lctx.fill();
+  lctx.font = '600 10px Barlow'; lctx.fillStyle = '#b81c1c'; lctx.textAlign = 'left';
+  lctx.fillText('A\'B\' (virtual image)', imgX+8, mid - imgH_px + 4);
+  lctx.fillText(Math.abs(ABp_cm).toFixed(1)+' cm', imgX+8, mid - imgH_px + 16);
+  lctx.restore();
+
+  // ── OBJECT ──
+  const objH = 60;
+  lctx.save();
+  lctx.strokeStyle = '#1a3a6b'; lctx.lineWidth = 2.5;
+  lctx.fillStyle   = '#1a3a6b';
+  lctx.beginPath(); lctx.moveTo(objX, mid); lctx.lineTo(objX, mid - objH); lctx.stroke();
+  lctx.beginPath(); lctx.moveTo(objX-6, mid-objH+8); lctx.lineTo(objX, mid-objH-2); lctx.lineTo(objX+6, mid-objH+8); lctx.fill();
+  lctx.font = '600 10px Barlow'; lctx.fillStyle = '#1a3a6b'; lctx.textAlign = 'center';
+  lctx.fillText('AB = ' + AB_m.toFixed(2)+'m', objX, mid+16);
+  lctx.restore();
+
+  // ── DIVERGING LENS ──
+  lctx.save();
+  const lt = mid - 75, lb = mid + 75;
+  lctx.strokeStyle = '#0d0d0d'; lctx.lineWidth = 3;
+  lctx.fillStyle = 'rgba(100,160,220,0.10)';
+  lctx.beginPath(); lctx.moveTo(lensX,lt); lctx.quadraticCurveTo(lensX-20,mid,lensX,lb); lctx.quadraticCurveTo(lensX+20,mid,lensX,lt); lctx.fill(); lctx.stroke();
+  // Arrows
+  lctx.fillStyle = '#0d0d0d';
+  lctx.beginPath(); lctx.moveTo(lensX-6,lt+10); lctx.lineTo(lensX,lt-4); lctx.lineTo(lensX+6,lt+10); lctx.fill();
+  lctx.beginPath(); lctx.moveTo(lensX-6,lb-10); lctx.lineTo(lensX,lb+4); lctx.lineTo(lensX+6,lb-10); lctx.fill();
+  lctx.font = '600 11px Barlow'; lctx.fillStyle = '#0d0d0d'; lctx.textAlign = 'center';
+  lctx.fillText('Diverging Lens', lensX, lb+18);
+  lctx.fillText('f\'= '+f_cm.toFixed(0)+' cm', lensX, lb+30);
+  lctx.restore();
+
+  // ── THREE RAYS ──
+  const rayOffsets = [-objH, -objH/2, 0];
+  const colors = ['#b81c1c','#1a3a6b','#2e7d32'];
+  rayOffsets.forEach((dy, i) => {
+    const startY = mid + dy;
+    const hitY   = startY;
+
+    // Incident ray: from object tip to lens at same height
+    lctx.save();
+    lctx.strokeStyle = colors[i]; lctx.lineWidth = 1.5; lctx.globalAlpha = 0.8;
+    lctx.beginPath(); lctx.moveTo(objX, mid - objH); lctx.lineTo(lensX, startY); lctx.stroke();
+
+    // After diverging: trace back to virtual focal point direction
+    const slope = (hitY - mid) / (lensX - fX_l);
+    const endX  = W - 20;
+    const endY  = hitY + slope * (endX - lensX);
+    arrow(lctx, lensX, hitY, endX, endY, colors[i], 1.5);
+    lctx.restore();
+
+    // Dashed virtual ray back
+    lctx.save();
+    lctx.strokeStyle = colors[i]; lctx.lineWidth = 1; lctx.globalAlpha = 0.35;
+    lctx.setLineDash([4,4]);
+    lctx.beginPath(); lctx.moveTo(lensX, hitY); lctx.lineTo(fX_l, mid); lctx.stroke();
+    lctx.restore();
+  });
+
+  // ── LABELS ──
+  lctx.save();
+  lctx.font = '500 10px Barlow'; lctx.textAlign = 'center'; lctx.fillStyle = '#555';
+  lctx.fillText('|OA| = '+Math.abs(OA_cm)+' cm', (objX+lensX)/2, mid+28);
+  lctx.fillText('|OA\'| = '+Math.abs(OAp_cm).toFixed(1)+' cm', (imgX+lensX)/2, mid+28);
+  lctx.restore();
+
+  // ── DIMENSION LINES ──
+  drawDimLine(lctx, objX, lensX, mid+38, '#555');
+  if(imgX < lensX) drawDimLine(lctx, imgX, lensX, mid+38, '#b81c1c');
+}
+
+function arrow(ctx, x1,y1,x2,y2, color, lw) {
+  const angle = Math.atan2(y2-y1, x2-x1);
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x2 - 9*Math.cos(angle-0.4), y2 - 9*Math.sin(angle-0.4));
+  ctx.lineTo(x2, y2);
+  ctx.lineTo(x2 - 9*Math.cos(angle+0.4), y2 - 9*Math.sin(angle+0.4));
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawDimLine(ctx, x1,x2, y, color) {
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath(); ctx.moveTo(x1,y-4); ctx.lineTo(x1,y+4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2,y-4); ctx.lineTo(x2,y+4); ctx.stroke();
+  ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.stroke();
+  ctx.restore();
+}
+
+// ── PEEPHOLE VIEWS ──
+function drawPeepholeViews() {
+  const { M, ABp_cm } = calcOptics();
+
+  // WITHOUT LENS
+  const c1 = document.getElementById('peepholeNoLens');
+  const x1 = c1.getContext('2d');
+  const r1 = 100;
+  x1.clearRect(0,0,200,200);
+  x1.save();
+  x1.beginPath(); x1.arc(100,100,r1,0,Math.PI*2); x1.clip();
+  x1.fillStyle='#1a1a2e'; x1.fillRect(0,0,200,200);
+  // Corridor
+  x1.fillStyle='#2a2a3e';
+  x1.fillRect(60,40,80,120);
+  // Guard (big, partially cut off)
+  const gH = 160;
+  const gW = 40;
+  x1.fillStyle='#555';
+  x1.fillRect(80, 200-gH, gW, gH-40);
+  // head
+  x1.beginPath(); x1.arc(100, 200-gH-10, 16, 0, Math.PI*2); x1.fill();
+  x1.fillStyle='rgba(255,60,60,0.35)';
+  x1.fillRect(0,0,200,200);
+  x1.font='700 11px Barlow'; x1.fillStyle='#fff'; x1.textAlign='center';
+  x1.fillText('⚠ LIMITED FOV', 100, 185);
+  x1.restore();
+
+  // WITH LENS
+  const c2 = document.getElementById('peepholeWithLens');
+  const x2 = c2.getContext('2d');
+  x2.clearRect(0,0,200,200);
+  x2.save();
+  x2.beginPath(); x2.arc(100,100,100,0,Math.PI*2); x2.clip();
+  x2.fillStyle='#1a1a2e'; x2.fillRect(0,0,200,200);
+  // Wide corridor
+  x2.fillStyle='#2a2a3e';
+  x2.fillRect(20,30,160,140);
+  // Small virtual guard
+  const scale = Math.min(Math.abs(M) * 2.5, 0.9);
+  const vgH = Math.max(30, 140 * scale);
+  const vgW = Math.max(10, 30 * scale);
+  x2.fillStyle='#e05050';
+  x2.fillRect(100 - vgW/2, 170 - vgH, vgW, vgH - 16);
+  x2.beginPath(); x2.arc(100, 170-vgH-8, vgW/2*0.8, 0, Math.PI*2); x2.fill();
+  x2.fillStyle='rgba(40,200,80,0.25)';
+  x2.fillRect(0,0,200,200);
+  x2.font='700 11px Barlow'; x2.fillStyle='#fff'; x2.textAlign='center';
+  x2.fillText('✓ FULL VIEW', 100, 185);
+  x2.restore();
+}
+
+// ── TABS ──
+function switchTab(name) {
+  document.querySelectorAll('.sim-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  setTimeout(update, 50);
+}
+
+// Init
+window.addEventListener('resize', update);
+update();
+</script>
+</body>
+</html>
