@@ -1,65 +1,54 @@
-# 🔬 OOE VIRTUAL LABORATORY: OPTICAL & EM SYSTEMS
-**Institution:** National Higher School of Advanced Technologies (ENSTA)  
-**Module:** Physics / Computer Vision  
-**Academic Year:** 2025–2026  
-**Supervisor:** Dr. CHEGGOU Rabéa  
+# 📡 Integrated Engineering Laboratory: Unified Mission
+### **Instructor:** Dr. CHEGGOU | **Group Project 2026**
 
 ---
 
-> **📌 NOTE FOR STUDENTS:** This GitHub repository has been established for a **Better Collection** and professional archiving of your submitted works. It serves as the official digital library for the MI2 OOE projects.
+## 🌐 Live Project Dashboard
+
+* **Live Simulation (Streamlit Cloud For Image Constraction Track5 Diverging Lenses):** https://berrafnoha.github.io/OOE-Virtual-Lab/
+* **Geometrical optics Track4 (Caustics simulation)** https://ooe-virtual-lab-gafcvg9wmnucxedby6q4ta.streamlit.app/
+* **Wave Optics (Track5 Antenna)** https://ooe-virtual-lab-cjaefehwzhztnf8cxaezpj.streamlit.app/
 
 ---
 
-## 👥 TEAM IDENTIFICATION
-*To be completed by the Project Leader:*
-- **Project Leader:** [Full Name]
-- **Group Number:** [e.g., G1, G2...]
-- **Team Members:**
-  1. [Name 1]
-  2. [Name 2]
-  3. [Name 3]
+## 📖 Project Overview
+This repository contains a suite of three interactive engineering simulations. Our mission is to bridge the gap between **Geometrical Optics** and **Electromagnetic Signal Security**, specifically focusing on wave divergence, energy flux via the Poynting Vector, and the formation of optical caustics.
 
 ---
 
-## 📂 PROJECT THEMES
-
-### Theme 1: Physics of Refraction & Engineering Applications
-* Geometric modeling of refraction (Snell-Descartes laws).
-* Apparent depth phenomena and underwater robotic guidance.
-* Fiber optics: Critical angles and total internal reflection.
-
-### Theme 2: Biophysics of Vision & Optical Correction
-* Modeling the human eye (Relaxed vs. Accommodated).
-* Physiological causes of Myopia and corrective lens simulations.
-
-### Theme 3: Advanced Projection & Surveillance Systems
-* Ray tracing for video projectors and image inversion.
-* Wide-angle visualization through door peepholes (-10D lenses).
-
-### Theme 4: EM Waves, Interference & Diffraction
-* Wave propagation and Electromagnetic spectrum.
-* Modeling Young’s double-slit interference patterns.
-* Diffraction impact on resolution in Computer Vision.
+## 👥 The Engineering Team
+* **BERRAF Noha** | **KHELIL Ikram** | **BAKIRI Soundous**
+* **ABDENOUZ Khadidja** | **MOUHEB Maya**
 
 ---
 
-## 🚀 SUBMISSION INSTRUCTIONS (FOR PROJECT LEADERS)
+## 📂 Laboratory Tracks
+# Here are the links of the Tracks and every Track has it's own README.md:
 
-⚠️ **Strict Policy:** Only the **Project Leader (Chef de Projet)** is authorized to manage the repository and push the final code.
+### 🌊 [Track 1: Pool Caustics Simulation](./Track-4-Caustics/)
+* **Physics:** Study of light ray envelopes formed by refraction through wavy water surfaces.
+* **Implementation:** Python/Matplotlib ray-tracing engine.
+* **Formula:** $n_1 \sin \theta_1 = n_2 \sin \theta_2$ (Snell's Law applied to surface gradients).
 
-1. **Fork:** The Project Leader must fork this repository.
-2. **Identification:** Fill in the "Team Identification" section above.
-3. **Upload:** Push your HTML/JS simulations and technical documentation to your fork.
-4. **GitHub Pages:** Activate "GitHub Pages" in your settings to make your simulation live.
-5. **Final Link:** Share your repository URL with Dr. Cheggou for final archiving.
-6. ---
+### 👁️ [Track 2: Diverging Lens Explorer](./Track-5-Peephole/)
+* **Physics:** Analysis of virtual image formation and focal lengths ($f' < 0$).
+* **Implementation:** Interactive HTML5/JS engine.
+* **Formula:** $\frac{1}{v} - \frac{1}{u} = \frac{1}{f'}$ (Thin Lens Equation).
 
-## 🔗 LIVE DEMO
-> **Instruction for Project Leaders:** Once you have activated **GitHub Pages** in your settings, replace the URL below with your actual live link.
-
-[🚀 Click here to view the Interactive Simulation](https://your-username.github.io/your-repo-name/)
+### 📡 [Track 3: Spy Antenna & Poynting Flux](./Track-5-Antenna/)
+* **Physics:** EM Security and Signal Leakage Detection.
+* **Implementation:** Python Streamlit Dashboard.
+* **Formula:** $\vec{S} = \vec{E} \times \vec{H}$ (Poynting Vector for energy flux).
 
 ---
 
----
-**Thank you for your professional contribution!**
+## 🛠️ Execution Guide
+
+### 🌐 Web Modules (HTML/JS)
+Simply open the **GitHub Pages** link above or run `index.html` locally.
+
+### 🐍 Python Modules (Streamlit)
+To run locally, ensure you have the dependencies installed:
+```bash
+pip install -r requirements.txt
+streamlit run app.py
